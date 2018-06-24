@@ -237,15 +237,19 @@ class GAlerts
                 if (m.Groups.Count > 0)
                 {
                     string name = m.Groups[1].Value;
-                    string value="";
+                    string value = "";
 
                     Match n = Regex.Match(el, "value=(?:[\"'])?([^\"'\\s]*)", RegexOptions.IgnoreCase);
                     if (n.Groups.Count > 0)
                     {
                         value = n.Groups[1].Value;
                     }
-
-                    res.Add(name, value);
+                    try
+                    {
+                        res.Add(name, value);
+                    }
+                    catch(Exception e)
+                    { }
                 }
             }
         }

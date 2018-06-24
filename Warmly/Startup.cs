@@ -12,6 +12,9 @@ using Google.Apis.Gmail.v1;
 using Google.Apis.Gmail.v1.Data;
 using Google.Apis.Services;
 using Google.Apis.Util.Store;
+using System.Web;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
 [assembly: OwinStartup(typeof(Warmly.Startup))]
 
 namespace Warmly
@@ -68,23 +71,49 @@ namespace Warmly
             // service.Users
             // request.
        //     Console.Read();
-
+            /*
                 GAlerts alert =new GAlerts("ethan@studytreeapp.com","qpal1z11");
-                
+                alert.create("test", "en", "happens", "all", "best", "feed");
+
                 foreach(AlertItem item in alert.getList())
                 {
                     
                 }
-
+            */
+            IList<string> urls = new List<string>();
 
             ListThreadsResponse threads = service.Users.Threads.List("me").Execute();
             foreach (var thread in threads.Threads.ToList())
             {
                 if(thread.Snippet.Contains("Google student success"))
                 {
-                      
+                    var threadDetails = service.Users.Threads.Get("me", thread.Id).Execute();
+                    var msg = service.Users.Messages.Get("me", threadDetails.Messages[0].Id).Execute();
+                 //   byte[] encbuff = Encoding.UTF8.GetBytes(msg.Payload.Parts[0].Body.Data);
+                 //   string decodedString = HttpServerUtility.UrlTokenEncode(encbuff);
+                //    byte[] decbuff = HttpServerUtility.UrlTokenDecode(msg.Payload.Parts[0].Body.Data);
+                  //   decodedString = Encoding.UTF8.GetString(decbuff);
+                     string s = msg.Payload.Parts[0].Body.Data;
+                     string incoming = s
+     .Replace('_', '/').Replace('-', '+');
+                     switch (s.Length % 4)
+                     {
+                         case 2: incoming += "=="; break;
+                         case 3: incoming += "="; break;
+                     }
+                     byte[] bytes = Convert.FromBase64String(incoming);
+                     string originalText = Encoding.ASCII.GetString(bytes);
+                    var matchCollection = Regex.Matches(originalText,"(http|ftp|https)://([\\w_-]+(?:(?:\\.[\\w_-]+)+))([\\w.,@?^=%&:/~+#-]*[\\w@?^=%&/~+#-])?");
+                    foreach(Match m in matchCollection)
+                    {
+                        if (!m.Value.Contains("https://www.google.com/alerts"))
+                        {
+                            urls.Add(m.Value);
+                        }
+                    }
                 }
             }
+
         }
     }
 }
